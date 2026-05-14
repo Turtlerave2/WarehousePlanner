@@ -6,27 +6,17 @@ using System.Threading.Tasks;
 
 namespace WarehousePlanner
 {
-    public class Order
+    public class Delivery
     {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string City { get; set; }
-        public string County { get; set; }
-        public string PostalCode { get; set; }
-
-        public double Lat { get; set; }
-        public double Lon { get; set; }
 
         public string Address { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
-
         //for delivery location to sort
         public bool IsOutlier { get; set; } = false;
 
         // Time it takes to unload furniture (30 mins default)
         public double ServiceTimeHours { get; set; } = 0.5;
-
-        public int DeliveryWindowStart { get; set; }
     }
-}
+
+    }

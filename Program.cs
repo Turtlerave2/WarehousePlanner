@@ -1,5 +1,7 @@
 ﻿using WarehousePlanner;
 
+RouteCalculation calculator = new RouteCalculation();
+
 //setting up list of narrowOrders examples
 var Orderss = new List<Order> {
     new Order { FirstName = "Mick", County = "Cork", City = "Mallow" },
@@ -17,11 +19,11 @@ var Orderss = new List<Order> {
 };
 
 var narrowOrders = new List<Order> {
-    new Order { FirstName = "Test1", County = "Cork", City = "Mitchelstown" }, 
-    new Order { FirstName = "Test2", County = "Tipperary", City = "Cashel" },
-    new Order { FirstName = "Test3", County = "Laois", City = "Portlaoise" },
-    new Order { FirstName = "Test4", County = "Kildare", City = "Naas" },
-    new Order { FirstName = "Test5", County = "Dublin", City = "Tallaght" }    
+    new Order { FirstName = "Test1", County = "Cork", City = "Mitchelstown", ServiceTimeHours = 0.5 },
+    new Order { FirstName = "Test2", County = "Tipperary", City = "Cashel", ServiceTimeHours = 0.5 },
+    new Order { FirstName = "Test3", County = "Laois", City = "Portlaoise", ServiceTimeHours = 0.5 },
+    new Order { FirstName = "Test4", County = "Kildare", City = "Naas", ServiceTimeHours = 0.5 },
+    new Order { FirstName = "Test5", County = "Dublin", City = "Tallaght", ServiceTimeHours = 0.5 }
 };
 
 var wideOrders = new List<Order> {
@@ -43,31 +45,21 @@ foreach (var o in narrowOrders)
     }
 }
 
-//(Longitude Spread) for straight line or circle method of delivery
-Console.WriteLine("--- RAW COORDINATE CHECK ---");
-foreach (var o in narrowOrders)
-{
-    Console.WriteLine($"Order for {o.City}: Lat {o.Lat:F4}, Lon {o.Lon:F4}");
-}
-Console.WriteLine("----------------------------");
+// 2. Identify Outliers 
+double avgLon = narrowOrders.Average(o => o.Lon);
+double threshold = 2.5; // Adjust based on gap
+var validRoute = narrowOrders.Where(o => Math.Abs(o.Lon - avgLon) <= threshold).ToList();
+var outliers = narrowOrders.Where(o => Math.Abs(o.Lon - avgLon) > threshold).ToList();
+
 
 // look at list only 
 var allLons = narrowOrders.Select(o => o.Lon).ToList();
 double minLon = allLons.Min();
 double maxLon = allLons.Max();
 
-// Subtracting gives the true geographic gap
-double lonSpread = Math.Abs(maxLon - minLon);
-
-Console.WriteLine($"DEBUG: Calculated MinLon: {minLon:F4}");
-Console.WriteLine($"DEBUG: Calculated MaxLon: {maxLon:F4}");
-Console.WriteLine($"DEBUG: Final Longitude Spread: {lonSpread:F4}");
-
-
-// See the actual spread in the console (how big gap)
-Console.WriteLine($"DEBUG: Longitude Spread is {lonSpread:F4}");
 
 IEnumerable<Order> optimizedRoute;
+double lonSpread = Math.Abs(validRoute.Max(o => o.Lon) - validRoute.Min(o => o.Lon));
 
 //check whether using a straight line delivery or circle delivery methods, and how to organise them
 if (lonSpread < 2.5)
@@ -80,30 +72,32 @@ else
     Console.WriteLine("Mode Detected: Circular (Quadrant-based)");
     optimizedRoute = narrowOrders
         .OrderByDescending(o => Math.Round(GetAngle(o.Lat, o.Lon) / 90))
-        .ThenBy(o => GetDistance(o.Lat, o.Lon));
+        .ThenBy(o => GetDistance(o.Lat, o.Lon))
+        .ToList();
 }
 
+Console.WriteLine("\n--- BALLYBOUGHAL WAREHOUSE: DAILY SCHEDULE ---");
+Console.WriteLine($"Driver Speed: 80 km/h | Return Cutoff: 20:00\n"); 
 
+calculator.CalculateRouteSchedule(optimizedRoute.ToList(), startHour: 7.5);
+var finalPath = optimizedRoute.ToList();
 
-// Print it out to the Console
-Console.WriteLine("--- BALLYBOUGHAL WAREHOUSE: OPTIMIZED ROUTE ---");
-Console.WriteLine("-----------------------------------------------");
-
-var routeList = optimizedRoute.ToList();
-for (int i = 0; i < routeList.Count; i++)
+if (outliers.Any())
 {
-    var stop = routeList[i];
-    Console.WriteLine($"{i + 1}. {stop.City} ({stop.County})");
+    Console.WriteLine("\n--- POSTPONED ORDERS (OUTLIERS) ---");
+    foreach (var o in outliers)
+    {
+        Console.WriteLine($"Save for later: {o.City} ({o.County}) - Lon Gap: {Math.Abs(o.Lon - avgLon):F2}");
+    }
 }
 
-Console.WriteLine("-----------------------------------------------");
-Console.WriteLine("Route Complete. Return to Base.");
-Console.ReadLine(); 
+Console.WriteLine("\nOptimization Complete. Press Enter to exit.");
+Console.ReadLine();
 
 
 
 //--------------------------------------------///---------------------------------------------//
-                                      //methods for above
+//methods for above
 
 //maths jumbo to help coords
 static double GetAngle(double targetLat, double targetLon)
