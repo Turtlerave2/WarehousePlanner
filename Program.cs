@@ -76,11 +76,7 @@ else
         .ToList();
 }
 
-Console.WriteLine("\n--- BALLYBOUGHAL WAREHOUSE: DAILY SCHEDULE ---");
-Console.WriteLine($"Driver Speed: 80 km/h | Return Cutoff: 20:00\n"); 
-
 calculator.CalculateRouteSchedule(optimizedRoute.ToList(), startHour: 7.5);
-var finalPath = optimizedRoute.ToList();
 
 if (outliers.Any())
 {

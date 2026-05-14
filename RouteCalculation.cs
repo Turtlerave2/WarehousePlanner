@@ -47,15 +47,24 @@ namespace WarehousePlanner
             return (Math.PI / 180) * angle;
         }
 
-        public void CalculateRouteSchedule(List<Order> route, double startHour = 8.0)
+        public void CalculateRouteSchedule(List<Order> route, double startHour = 6.0)
         {
+            //for testing purpose to force base as last "delivery"
+            Order warehouseBase = new Order
+            {
+                City = "Ballyboughal (Warehouse)",
+                Lat = 53.518,
+                Lon = -6.265
+            };
+
             double currentHour = startHour;
             double driverSpeedKmH = 80.0;
+            Order currentPosition = warehouseBase;
 
             for (int i = 0; i < route.Count; i++)
             {
                 //Calculate distance Lat/Lon 
-                double distance = (i == 0) ? 0 : CalculateKm(route[i - 1], route[i]);
+                double distance = (i == 0) ? 0 : CalculateKm(currentPosition, route[i]);
 
                 //drive time 
                 double driveTime = distance / driverSpeedKmH;
@@ -65,12 +74,19 @@ namespace WarehousePlanner
 
                 //Add the unloading time
                 currentHour += 0.5;
+                currentPosition = route[i];
+            }
 
-                //Check against the 8 PM hard cutoff
-                if (currentHour > 20.0)
-                {
-                    Console.WriteLine("Warning: This delivery exceeds the 8 PM driver cutoff!");
-                }
+            double distBack = CalculateKm(currentPosition, warehouseBase);
+            double returnDriveTime = distBack / driverSpeedKmH;
+            currentHour += returnDriveTime;
+            Console.WriteLine("-----------------------------------------------");
+            Console.WriteLine($"RETURN TO BASE: Arrived at {warehouseBase.City} at {FormatTime(currentHour)}");
+
+            //Check against the 8 PM hard cutoff
+            if (currentHour > 20.0)
+            {
+                Console.WriteLine("Warning: This delivery exceeds the 8 PM driver cutoff!");
             }
         }
 
