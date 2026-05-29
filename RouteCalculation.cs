@@ -27,7 +27,7 @@ namespace WarehousePlanner
             return orders;
         }
 
-        private double CalculateKm(Order d1, Order d2)
+        public double CalculateKm(Order d1, Order d2)
         {
             double R = 6371;
             double dLat = ToRadians(d2.Lat - d1.Lat); 
@@ -64,7 +64,7 @@ namespace WarehousePlanner
             for (int i = 0; i < route.Count; i++)
             {
                 //Calculate distance Lat/Lon 
-                double distance = (i == 0) ? 0 : CalculateKm(currentPosition, route[i]);
+                double distance = CalculateKm(currentPosition, route[i]);
 
                 //drive time 
                 double driveTime = distance / driverSpeedKmH;

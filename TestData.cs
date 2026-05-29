@@ -8,41 +8,89 @@ namespace WarehousePlanner
 {
     public static class TestData
     {
-        //basic standard tests
-
-        // Scenario A ---> The standard narrow line route down the M7/M8 give or take 
-        public static List<Order> GetSouthRun()
+        public static void ExecuteAll()
         {
-            return new List<Order>
-            {
-                new Order { FirstName = "Customer_Cork", City = "Mitchelstown", Lat = 52.268, Lon = -8.284 },
-                new Order { FirstName = "Customer_Tipp", City = "Cashel", Lat = 52.516, Lon = -7.889 },
-                new Order { FirstName = "Customer_Laois", City = "Portlaoise", Lat = 53.034, Lon = -7.300 },
-                new Order { FirstName = "Customer_Kildare", City = "Naas", Lat = 53.218, Lon = -6.664 },
-                new Order { FirstName = "Customer_Dublin", City = "Tallaght", Lat = 53.288, Lon = -6.368 }
-            };
-        }
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("========================================");
+            Console.WriteLine(" RUNNING WAREHOUSE PLANNER TEST SUITE ");
+            Console.WriteLine("========================================");
+            Console.ResetColor();
 
-        // Scenario B: The massive cross the country scattered run (circle)
-        public static List<Order> GetNationalWideRun()
-        {
-            return new List<Order>
-            {
-                new Order { FirstName = "Cust_Wicklow", City = "Arklow", Lat = 52.793, Lon = -6.152 },
-                new Order { FirstName = "Cust_Galway", City = "Oranmore", Lat = 53.271, Lon = -8.931 },
-                new Order { FirstName = "Cust_Kerry", City = "Tralee", Lat = 52.268, Lon = -9.699 }
-            };
-        }
+            int passed = 0;
+            int failed = 0;
 
-        // Scenario C: Testing edge-cases (Missing data /Broken coordinates)
-        public static List<Order> GetBrokenDataRun()
-        {
-            return new List<Order>
+            // ------------------------------------------------------------
+            // TEST 1: Distance Calculation Verification
+            // ------------------------------------------------------------
+            try
             {
-                new Order { FirstName = "Valid_Kildare", City = "Naas", Lat = 53.218, Lon = -6.664 },
-                new Order { FirstName = "Buggy_Data_1", City = "UnknownTown", Lat = 0, Lon = 0 }, //bad one
-                new Order { FirstName = "Valid_Dublin", City = "Swords", Lat = 53.459, Lon = -6.218 }
-            };
+                //test the distance Ballyboughal base and Naas
+                Order baseStation = new Order { Lat = 53.518, Lon = -6.265 };
+                Order naasStop = new Order { Lat = 53.218, Lon = -6.664 };
+
+                // invoke the methods
+                RouteCalculation calculator = new RouteCalculation();
+
+                double distance = calculator.CalculateKm(baseStation, naasStop);
+
+                // Real world distance is roughly 43-44 km
+                if (distance < 40 || distance > 46)
+                {
+                    throw new Exception($"Distance math seems incorrect. Expected ~43.5km, but got {distance:F2}km.");
+                }
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($" TEST 1 PASSED: Distance calculation is highly accurate ({distance:F2} km).");
+                passed++;
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($" TEST 1 FAILED: {ex.Message}");
+                failed++;
+            }
+
+            // ------------------------------------------------------------
+            // TEST 2: Outlier Flagging Logic
+            // ------------------------------------------------------------
+            try
+            {
+                RouteCalculation calculator = new RouteCalculation();
+
+                // Setup a cluster near Dublin and one outlier far out West 
+                List<Delivery> testDeliveries = new List<Delivery>
+                {
+                    new Delivery { Address = "Dublin Stop 1", Longitude = -6.25, IsOutlier = false },
+                    new Delivery { Address = "Dublin Stop 2", Longitude = -6.21, IsOutlier = false },
+                    new Delivery { Address = "Galway Outlier", Longitude = -9.05, IsOutlier = false }
+                };
+
+                var evaluated = calculator.IdentifyOutliers(testDeliveries, threshold: 1.0);
+
+                if (!testDeliveries[2].IsOutlier)
+                    throw new Exception("Galway stop was not flagged as an outlier, but it is far west.");
+
+                if (testDeliveries[0].IsOutlier)
+                    throw new Exception("Normal cluster stop was accidentally flagged as an outlier.");
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine(" TEST 2 PASSED: Outlier detection caught the rogue coordinate perfectly.");
+                passed++;
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($" TEST 2 FAILED: {ex.Message}");
+                failed++;
+            }
+
+            // ------------------------------------------------------------
+            // SUMMARY
+            // ------------------------------------------------------------
+            Console.ResetColor();
+            Console.WriteLine("========================================");
+            Console.WriteLine($" SUMMARY: {passed} Passed | {failed} Failed");
+            Console.WriteLine("========================================\n");
         }
 
     }

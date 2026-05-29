@@ -2,8 +2,10 @@
 
 RouteCalculation calculator = new RouteCalculation();
 
-//setting up list of narrowOrders examples
-var Orderss = new List<Order> {
+// =========================================================================
+// DATASETS
+// =========================================================================
+var orderssList = new List<Order> {
     new Order { FirstName = "Mick", County = "Cork", City = "Mallow" },
     new Order { FirstName = "Sarah", County = "Donegal", City = "Letterkenny" },
     new Order { FirstName = "John", County = "Cork", City = "Cork City" },
@@ -18,7 +20,7 @@ var Orderss = new List<Order> {
     new Order { FirstName = "Bob", County = "Cork", City = "Mallow" }
 };
 
-var narrowOrders = new List<Order> {
+var narrowOrdersList = new List<Order> {
     new Order { FirstName = "Test1", County = "Cork", City = "Mitchelstown", ServiceTimeHours = 0.5 },
     new Order { FirstName = "Test2", County = "Tipperary", City = "Cashel", ServiceTimeHours = 0.5 },
     new Order { FirstName = "Test3", County = "Laois", City = "Portlaoise", ServiceTimeHours = 0.5 },
@@ -26,91 +28,153 @@ var narrowOrders = new List<Order> {
     new Order { FirstName = "Test5", County = "Dublin", City = "Tallaght", ServiceTimeHours = 0.5 }
 };
 
-var wideOrders = new List<Order> {
-    new Order { FirstName = "TestA", County = "Wicklow", City = "Arklow" },    
-    new Order { FirstName = "TestB", County = "Galway", City = "Galway City" }, 
-    new Order { FirstName = "TestC", County = "Kerry", City = "Tralee" },     
-    new Order { FirstName = "TestD", County = "Mayo", City = "Westport" },   
-    new Order { FirstName = "TestE", County = "Meath", City = "Navan" }      
+var wideOrdersList = new List<Order> {
+    new Order { FirstName = "TestA", County = "Wicklow", City = "Arklow" },
+    new Order { FirstName = "TestB", County = "Galway", City = "Galway City" },
+    new Order { FirstName = "TestC", County = "Kerry", City = "Tralee" },
+    new Order { FirstName = "TestD", County = "Mayo", City = "Westport" },
+    new Order { FirstName = "TestE", County = "Meath", City = "Navan" }
 };
 
-//assigning coordinates for ze service
-foreach (var o in narrowOrders)
+
+// =========================================================================
+// INTERACTIVE MENU LOOP
+// =========================================================================
+while (true)
 {
-    if (LocationService.CountyCoords.ContainsKey(o.County))
+    Console.Clear();
+    Console.ForegroundColor = ConsoleColor.Blue;
+    Console.WriteLine("=================================================");
+    Console.WriteLine("      WAREHOUSE PLANNER LOGISTICS ROUTER         ");
+    Console.WriteLine("=================================================");
+    Console.ResetColor();
+    Console.WriteLine("1. Run Optimization: Narrow Dataset");
+    Console.WriteLine("2. Run Optimization: Wide Dataset");
+    Console.WriteLine("3. Run Optimization: Sample Orders List");
+    Console.WriteLine("4. Run Automated Logic Tests");
+    Console.WriteLine("5. Exit Application");
+    Console.WriteLine("-------------------------------------------------");
+    Console.Write("Select an option (1-5): ");
+
+    string choice = Console.ReadLine();
+    List<Order> selectedOrders = null;
+
+    if (choice == "5") break;
+
+    switch (choice)
     {
-        var coords = LocationService.CountyCoords[o.County];
-        o.Lat = coords.Lat;
-        o.Lon = coords.Lon;
+        case "1":
+            selectedOrders = narrowOrdersList;
+            Console.WriteLine("\nLoading Narrow Dataset...");
+            break;
+        case "2":
+            selectedOrders = wideOrdersList;
+            Console.WriteLine("\nLoading Wide Dataset...");
+            break;
+        case "3":
+            selectedOrders = orderssList;
+            Console.WriteLine("\nLoading Sample Orders Dataset...");
+            break;
+        case "4":
+            // Instantly executes your internal assertions
+            TestData.ExecuteAll();
+            Console.WriteLine("\nPress any key to return to menu...");
+            Console.ReadKey();
+            continue;
+        default:
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\nInvalid option! Press any key to retry...");
+            Console.ResetColor();
+            Console.ReadKey();
+            continue;
     }
-}
 
-// 2. Identify Outliers 
-double avgLon = narrowOrders.Average(o => o.Lon);
-double threshold = 2.5; // Adjust based on gap
-var validRoute = narrowOrders.Where(o => Math.Abs(o.Lon - avgLon) <= threshold).ToList();
-var outliers = narrowOrders.Where(o => Math.Abs(o.Lon - avgLon) > threshold).ToList();
+    // =========================================================================
+    // CORE OPTIMIZATION ENGINE RUN
+    // =========================================================================
 
-
-// look at list only 
-var allLons = narrowOrders.Select(o => o.Lon).ToList();
-double minLon = allLons.Min();
-double maxLon = allLons.Max();
-
-
-IEnumerable<Order> optimizedRoute;
-double lonSpread = Math.Abs(validRoute.Max(o => o.Lon) - validRoute.Min(o => o.Lon));
-
-//check whether using a straight line delivery or circle delivery methods, and how to organise them
-if (lonSpread < 2.5)
-{
-    Console.WriteLine("Mode Detected: Straight Line (South-to-North)");
-    optimizedRoute = narrowOrders.OrderBy(o => o.Lat).ToList();
-}
-else
-{
-    Console.WriteLine("Mode Detected: Circular (Quadrant-based)");
-    optimizedRoute = narrowOrders
-        .OrderByDescending(o => Math.Round(GetAngle(o.Lat, o.Lon) / 90))
-        .ThenBy(o => GetDistance(o.Lat, o.Lon))
-        .ToList();
-}
-
-calculator.CalculateRouteSchedule(optimizedRoute.ToList(), startHour: 7.5);
-
-if (outliers.Any())
-{
-    Console.WriteLine("\n--- POSTPONED ORDERS (OUTLIERS) ---");
-    foreach (var o in outliers)
+    // Assign coordinates to whatever list was chosen
+    foreach (var o in selectedOrders)
     {
-        Console.WriteLine($"Save for later: {o.City} ({o.County}) - Lon Gap: {Math.Abs(o.Lon - avgLon):F2}");
+        if (LocationService.CountyCoords.ContainsKey(o.County))
+        {
+            var coords = LocationService.CountyCoords[o.County];
+            o.Lat = coords.Lat;
+            o.Lon = coords.Lon;
+        }
     }
+
+    // Identify Outliers 
+    double avgLon = selectedOrders.Average(o => o.Lon);
+    double threshold = 2.5;
+    var validRoute = selectedOrders.Where(o => Math.Abs(o.Lon - avgLon) <= threshold).ToList();
+    var outliers = selectedOrders.Where(o => Math.Abs(o.Lon - avgLon) > threshold).ToList();
+
+    IEnumerable<Order> optimizedRoute;
+
+    // Protect against an empty valid list sequence crashing Max/Min math
+    if (validRoute.Count == 0)
+    {
+        Console.WriteLine("Warning: No valid orders found inside cluster limits.");
+        Console.ReadKey();
+        continue;
+    }
+
+    double lonSpread = Math.Abs(validRoute.Max(o => o.Lon) - validRoute.Min(o => o.Lon));
+
+    // Process route modes
+    if (lonSpread < 2.5)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("\n[Mode Detected: Straight Line (South-to-North)]");
+        Console.ResetColor();
+        optimizedRoute = validRoute.OrderBy(o => o.Lat).ToList();
+    }
+    else
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("\n[Mode Detected: Circular (Quadrant-based)]");
+        Console.ResetColor();
+        optimizedRoute = validRoute
+            .OrderByDescending(o => Math.Round(GetAngle(o.Lat, o.Lon) / 90))
+            .ThenBy(o => GetDistance(o.Lat, o.Lon))
+            .ToList();
+    }
+
+    // Call schedule algorithm handler
+    Console.WriteLine("-------------------------------------------------");
+    calculator.CalculateRouteSchedule(optimizedRoute.ToList(), startHour: 7.5);
+
+    // Print out outliers if any exist
+    if (outliers.Any())
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine("\n--- POSTPONED ORDERS (OUTLIERS) ---");
+        Console.ResetColor();
+        foreach (var o in outliers)
+        {
+            Console.WriteLine($"Save for later: {o.City} ({o.County}) - Lon Gap: {Math.Abs(o.Lon - avgLon):F2}");
+        }
+    }
+
+    Console.WriteLine("\nProcessing Complete. Press any key to return to menu.");
+    Console.ReadKey();
 }
+    
 
-Console.WriteLine("\nOptimization Complete. Press Enter to exit.");
-Console.ReadLine();
-
-
-
-//--------------------------------------------///---------------------------------------------//
-//methods for above
-
-//maths jumbo to help coords
-static double GetAngle(double targetLat, double targetLon)
+        // =========================================================================
+        // MATHEMATICAL HELPERS
+        // =========================================================================
+        static double GetAngle(double targetLat, double targetLon)
 {
-    // Math.Atan2 returns the angle in radians between the X-axis and the point 
     double deltaLat = targetLat - LocationService.BaseLat;
     double deltaLon = targetLon - LocationService.BaseLon;
-
-    // Convert to degrees and normalize to 0-360
     double angle = Math.Atan2(deltaLat, deltaLon) * (180 / Math.PI);
     return (angle + 360) % 360;
 }
 
-//more maths stuff , good enough for ballpark sorting-> will make better
 static double GetDistance(double targetLat, double targetLon)
 {
-    // Straight line distance (Pythagorean theorem) rough estimate of distance
     return Math.Sqrt(Math.Pow(targetLat - LocationService.BaseLat, 2) +
                      Math.Pow(targetLon - LocationService.BaseLon, 2));
 }
