@@ -98,37 +98,65 @@ while (true)
             Console.Write("Enter Street Address: ");
             customOrder.Address = Console.ReadLine();
 
-            Console.Write("Enter City/Town: ");
-            customOrder.City = Console.ReadLine();
+            while (true)
+            {
+                Console.Write("Enter Eircode (e.g., A65 F221): ");
+                string inputEircode = Console.ReadLine();
 
-            Console.Write("Enter County: ");
-            customOrder.County = Console.ReadLine();
+                if (Order.IsValidEircode(inputEircode))
+                {
+                    customOrder.Eircode = inputEircode;
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"Eircode verified and formatted as: {customOrder.Eircode}");
+                    Console.ResetColor();
+                    break;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Invalid Eircode format!");
+                    Console.ResetColor();
+                }
+            }
+            while (true)
+            {
+                Console.Write("Enter City/Town: ");
+                customOrder.City = Console.ReadLine();
 
-            // run check
-            if (LocationService.TownCoords.ContainsKey(customOrder.City))
-            {
-                var coords = LocationService.TownCoords[customOrder.City];
-                customOrder.Lat = coords.Lat;
-                customOrder.Lon = coords.Lon;
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($" [Geocode Success]: Pinpointed precise town coordinates for {customOrder.City}.");
+                Console.Write("Enter County: ");
+                customOrder.County = Console.ReadLine();
+
+                // Run the database checks
+                if (LocationService.TownCoords.ContainsKey(customOrder.City))
+                {
+                    var coords = LocationService.TownCoords[customOrder.City];
+                    customOrder.Lat = coords.Lat;
+                    customOrder.Lon = coords.Lon;
+
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"[Geocode Success]: Pinpointed precise town coordinates for {customOrder.City}.");
+                    Console.ResetColor();
+                    break;
+                }
+                else if (LocationService.CountyCoords.ContainsKey(customOrder.County))
+                {
+                    var coords = LocationService.CountyCoords[customOrder.County];
+                    customOrder.Lat = coords.Lat;
+                    customOrder.Lon = coords.Lon;
+
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"Geocode Fallback]: '{customOrder.City}' not found in database. Using center coords for Co. {customOrder.County}.");
+                    Console.ResetColor();
+                    break;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"[Geocode Failed]: Location completely unknown ('{customOrder.City}', Co. '{customOrder.County}').");
+                    Console.WriteLine("Please check your spelling and try again.\n");
+                    Console.ResetColor();
+                }
             }
-            else if (LocationService.CountyCoords.ContainsKey(customOrder.County))
-            {
-                var coords = LocationService.CountyCoords[customOrder.County];
-                customOrder.Lat = coords.Lat;
-                customOrder.Lon = coords.Lon;
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"[Geocode Fallback]: Town unknown. Assigned generic center coordinates for Co. {customOrder.County}.");
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(" [Geocode Failed]: Location completely unknown. Setting coordinates to base warehouse.");
-                customOrder.Lat = LocationService.BaseLat;
-                customOrder.Lon = LocationService.BaseLon;
-            }
-            Console.ResetColor();
 
             // For now, will add to narrow orders list to see if it routes!
             narrowOrdersList.Add(customOrder);
