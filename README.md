@@ -1,5 +1,10 @@
 ﻿# Warehouse Route Optimizer (Ballyboughal Edition)
 
+### 🌐 [View Live Portfolio Preview](https://turtlerave2.github.io)
+
+## 🖥️ System Dashboard & Interface Preview
+![Warehouse Optimizer Automated Test Suite](images/Screenshot%202026-06-04%20203331.png)
+
 ## 📌 The Problem & Goal
 **The Problem:** Manual routing takes way too long and depends completely on head knowledge and continuous checking of google maps. 
 **The Goal:** Eliminate manual scheduling entirely, reduce driver "zigzagging", ensure efficient van loading, and guarantee the driver is safely back at the Ballyboughal warehouse before the strict **8:00 PM driver cutoff**.
@@ -37,6 +42,16 @@ The time-tracking math mirrors the precise constraints of a real delivery driver
 * **Negative Coordinate Math:** Fixed a critical calculation bug where Western hemisphere longitudes (which are negative values in Ireland) were confusing the basic distance logic. Integrated a standard mathematical normalization structure to keep distance calculations precise.
 * **Missing/Broken Data Defense:** Added an initialization check to intercept missing coordinates (towns showing up as `0,0`). The engine drops these broken points cleanly so they cannot corrupt the sorting matrix.
 * **Compiler Ghost Caches:** Cleaned out conflicting multi-framework build files (.NET 8 vs .NET 9 artifacts) to consolidate the app down to a streamlined, high-performance native .NET 8 runtime project structure.
+* **Geo Coordinate:** Resolved a critical distance matrix calculation bug where Western Hemisphere Prime Meridian variances inverted basic absolute tracking logic. Implemented a geometric normalization structure to ensure absolute calculation results.
+
+---
+
+## 🛠️ Production Stack & Tools
+* **Core Language:** C# (Strongly Typed Object-Oriented Architecture)
+* **Runtime Ecosystem:** .NET 8 SDK (Native Execution Engine)
+* **Mathematical Framework:** Haversine Spherical Trigonometry Formula
+* **Version Control & Docs:** Git, GitHub, and Markdown Engine
+* **Data Integration:** JSON Data Parsing Profiles / Operational Datasets
 
 ---
 
