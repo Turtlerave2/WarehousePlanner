@@ -96,7 +96,15 @@ while (true)
     // Assign coordinates to whatever list was chosen
     foreach (var o in selectedOrders)
     {
-        if (LocationService.CountyCoords.ContainsKey(o.County))
+        //coords specific town/city first
+        if (LocationService.TownCoords.ContainsKey(o.City))
+        {
+            var coords = LocationService.TownCoords[o.City];
+            o.Lat = coords.Lat;
+            o.Lon = coords.Lon;
+        }
+        //If town isn't tracked, use County point
+        else if (LocationService.CountyCoords.ContainsKey(o.County))
         {
             var coords = LocationService.CountyCoords[o.County];
             o.Lat = coords.Lat;

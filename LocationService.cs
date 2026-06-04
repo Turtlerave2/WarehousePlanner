@@ -43,5 +43,34 @@ namespace WarehousePlanner
     { "Dublin", (53.280, -6.360) },
         };
 
+
+        public static Dictionary<string, (double Lat, double Lon)> TownCoords = new(StringComparer.OrdinalIgnoreCase)
+        {
+            // Narrow dataset 
+            { "Mitchelstown", (52.266, -8.263) },
+            { "Cashel", (52.516, -7.889) },
+            { "Portlaoise", (53.031, -7.300) },
+            { "Naas", (53.218, -6.664) },
+            { "Tallaght", (53.288, -6.368) },
+
+            // Wide dataset
+            { "Arklow", (52.793, -6.149) },
+            { "Galway City", (53.270, -9.056) },
+            { "Tralee", (52.271, -9.699) },
+            { "Westport", (53.801, -9.523) },
+            { "Navan", (53.653, -6.683) },
+
+            // Sample list 
+            { "Mallow", (52.138, -8.642) },
+            { "Letterkenny", (54.951, -7.734) },
+            { "Cork City", (51.898, -8.471) },
+            { "Enniscorthy", (52.502, -6.568) },
+            { "Killarney", (52.059, -9.507) },
+            { "Castlebar", (53.851, -9.300) },
+            { "Roscommon Town", (53.629, -8.189) },
+            { "Mullingar", (53.523, -7.345) },
+            { "Bray", (53.201, -6.111) },
+            { "Dundalk", (54.004, -6.402) }
+        };
     }
 }
