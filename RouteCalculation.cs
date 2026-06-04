@@ -58,13 +58,23 @@ namespace WarehousePlanner
             };
 
             double currentHour = startHour;
-            double driverSpeedKmH = 80.0;
             Order currentPosition = warehouseBase;
 
             for (int i = 0; i < route.Count; i++)
             {
                 //Calculate distance Lat/Lon 
                 double distance = CalculateKm(currentPosition, route[i]);
+
+                double driverSpeedKmH = 80.0; 
+                string currentCounty = route[i].County.ToLower();
+
+                if (currentCounty == "dublin" || currentCounty == "cork")
+                {
+                    driverSpeedKmH = 40.0; // city limit speed
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine($"[Traffic Notice: Entering urban zone ({route[i].County}). Dropping speed to 40km/h]");
+                    Console.ResetColor();
+                }
 
                 //drive time 
                 double driveTime = distance / driverSpeedKmH;
@@ -73,12 +83,13 @@ namespace WarehousePlanner
                 Console.WriteLine($"Arriving at {route[i].City} ({route[i].FirstName}) at {FormatTime(currentHour)}");
 
                 //Add the unloading time
-                currentHour += 0.5;
+                currentHour += 10.0/60.0;
                 currentPosition = route[i];
             }
 
             double distBack = CalculateKm(currentPosition, warehouseBase);
-            double returnDriveTime = distBack / driverSpeedKmH;
+            double returnSpeed = 80.0;
+            double returnDriveTime = distBack / returnSpeed;
             currentHour += returnDriveTime;
             Console.WriteLine("-----------------------------------------------");
             Console.WriteLine($"RETURN TO BASE: Arrived at {warehouseBase.City} at {FormatTime(currentHour)}");
