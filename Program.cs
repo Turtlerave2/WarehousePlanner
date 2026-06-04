@@ -52,14 +52,15 @@ while (true)
     Console.WriteLine("2. Run Optimization: Wide Dataset");
     Console.WriteLine("3. Run Optimization: Sample Orders List");
     Console.WriteLine("4. Run Automated Logic Tests");
-    Console.WriteLine("5. Exit Application");
+    Console.WriteLine("5. New Customer Order");
+    Console.WriteLine("6. Exit Application");
     Console.WriteLine("-------------------------------------------------");
-    Console.Write("Select an option (1-5): ");
+    Console.Write("Select an option (1-6): ");
 
     string choice = Console.ReadLine();
     List<Order> selectedOrders = null;
 
-    if (choice == "5") break;
+    if (choice == "6") break;
 
     switch (choice)
     {
@@ -76,9 +77,64 @@ while (true)
             Console.WriteLine("\nLoading Sample Orders Dataset...");
             break;
         case "4":
-            // Instantly executes your internal assertions
+            //Execute the made tests
             TestData.ExecuteAll();
             Console.WriteLine("\nPress any key to return to menu...");
+            Console.ReadKey();
+            continue;
+        case "5":
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine("=================================================");
+            Console.WriteLine("          ENTER NEW CUSTOMER ORDER               ");
+            Console.WriteLine("=================================================");
+            Console.ResetColor();
+
+            Order customOrder = new Order();
+
+            Console.Write("Enter First Name: ");
+            customOrder.FirstName = Console.ReadLine();
+
+            Console.Write("Enter Street Address: ");
+            customOrder.Address = Console.ReadLine();
+
+            Console.Write("Enter City/Town: ");
+            customOrder.City = Console.ReadLine();
+
+            Console.Write("Enter County: ");
+            customOrder.County = Console.ReadLine();
+
+            // run check
+            if (LocationService.TownCoords.ContainsKey(customOrder.City))
+            {
+                var coords = LocationService.TownCoords[customOrder.City];
+                customOrder.Lat = coords.Lat;
+                customOrder.Lon = coords.Lon;
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($" [Geocode Success]: Pinpointed precise town coordinates for {customOrder.City}.");
+            }
+            else if (LocationService.CountyCoords.ContainsKey(customOrder.County))
+            {
+                var coords = LocationService.CountyCoords[customOrder.County];
+                customOrder.Lat = coords.Lat;
+                customOrder.Lon = coords.Lon;
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"[Geocode Fallback]: Town unknown. Assigned generic center coordinates for Co. {customOrder.County}.");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(" [Geocode Failed]: Location completely unknown. Setting coordinates to base warehouse.");
+                customOrder.Lat = LocationService.BaseLat;
+                customOrder.Lon = LocationService.BaseLon;
+            }
+            Console.ResetColor();
+
+            // For now, will add to narrow orders list to see if it routes!
+            narrowOrdersList.Add(customOrder);
+
+            Console.WriteLine("\nOrder successfully saved to the active operational queue!");
+            Console.WriteLine("Press any key to return to menu, then run Option 1 to see your new route...");
             Console.ReadKey();
             continue;
         default:
